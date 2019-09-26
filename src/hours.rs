@@ -1,5 +1,5 @@
-use crate::generic::{CustomField, ListResponse};
-use crate::traits::{Get, Post};
+use crate::generic::{CustomField, ListResponse, ProjectSimple, ServiceSimple};
+use crate::traits::{GetMany, Post};
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
@@ -21,9 +21,23 @@ pub struct HourPost {
     pub custom_fields: Option<Vec<CustomField>>,
 }
 
-type HourtypesListResponse = ListResponse<HourType>;
+#[derive(Serialize, Deserialize)]
+pub struct Hours {
+    pub id: String,
+    pub hours: f64,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub note: Option<String>,
+    pub project: Option<ProjectSimple>,
+    pub projectservice: Option<ServiceSimple>
+}
 
-impl Get<HourType> for HourType {
+type HourtypesListResponse = ListResponse<HourType>;
+type HoursListResponse = ListResponse<Hours>;
+
+impl GetMany<HourType> for HourType {
     fn url_suffix() -> String {
         "hours/hourstype".to_string()
     }
@@ -50,5 +64,16 @@ impl Post<HourPost> for HourPost {
             },
             (_, _) => panic!("Got no response")
         }
+    }
+}
+
+impl GetMany<Hours> for Hours {
+    fn url_suffix() -> String {
+        "hours/hours".to_string()
+    }
+
+    fn process_response(mut response: Response) -> Vec<Hours> {
+        let r: HoursListResponse = response.json().expect("Could not parse hours response");
+        r.data
     }
 }

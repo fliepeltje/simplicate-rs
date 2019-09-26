@@ -49,3 +49,16 @@ pub struct CustomField {
     pub value: String,
     pub label: Option<String>
 }
+
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProjectSimple {
+    pub id: String,
+    pub name: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ServiceSimple {
+    pub id: String,
+    pub name: Option<String>,
+}

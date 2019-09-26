@@ -1,5 +1,5 @@
 use crate::generic::{Budget, ListResponse};
-use crate::traits::Get;
+use crate::traits::GetMany;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
@@ -36,7 +36,7 @@ pub struct Service {
 type ProjectListResponse = ListResponse<Project>;
 type ServiceListResponse = ListResponse<Service>;
 
-impl Get<Project> for Project {
+impl GetMany<Project> for Project {
     fn url_suffix() -> String {
         "projects/project".to_string()
     }
@@ -47,7 +47,7 @@ impl Get<Project> for Project {
     }
 }
 
-impl Get<Service> for Service {
+impl GetMany<Service> for Service {
     fn url_suffix() -> String {
         "projects/service".to_string()
     }

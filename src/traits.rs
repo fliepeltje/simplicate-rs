@@ -2,7 +2,7 @@ use super::SimplicateClient;
 use reqwest::{Client, Response};
 use serde::Serialize;
 
-pub trait Get<T> {
+pub trait GetMany<T> {
     fn url_suffix() -> String;
     fn process_response(response: Response) -> Vec<T>;
 
@@ -44,14 +44,6 @@ pub trait Get<T> {
             }
             _ => objects,
         }
-    }
-
-    fn get(cli: SimplicateClient, params: Option<Vec<(String, String)>>) -> Vec<T> {
-        let extra_params = match params {
-            Some(ls) => ls,
-            None => vec![],
-        };
-        Self::get_many(cli, None, extra_params)
     }
 }
 
