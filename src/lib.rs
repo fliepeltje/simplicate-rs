@@ -54,14 +54,17 @@ impl SimplicateClient {
         Hours::get_many(self.clone(), None, params)
     }
 
-    pub fn get_latest_employee_hours_for_datetime(
+    pub fn get_latest_employee_hours_for_date(
         &self,
         employee_id: String,
-        datetime: String,
+        date: String,
     ) -> Option<Hours> {
+        let start_time = format!("{} 00:00:00", &date).to_string();
+        let end_time = format!("{} 23:59:59", &date).to_string();
         let params = vec![
             ("q[employee.id]".to_string(), employee_id),
-            ("q[start_date][le]".to_string(), datetime),
+            ("q[start_date][ge]".to_string(), start_time),
+            ("q[start_date][le]".to_string(), end_time),
             ("sort".to_string(), "-start_date".to_string()),
             ("limit".to_string(), "1".to_string()),
         ];
