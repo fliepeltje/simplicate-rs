@@ -9,4 +9,3 @@ edition = "2018"
 [dependencies]
 serde = "1.0.101"
 reqwest = "0.9.20"
-url = "2.1.0"

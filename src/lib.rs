@@ -53,4 +53,19 @@ impl SimplicateClient {
         };
         Hours::get_many(self.clone(), None, params)
     }
+
+    pub fn get_latest_employee_hours_for_datetime(
+        &self,
+        employee_id: String,
+        datetime: String,
+    ) -> Option<Hours> {
+        let params = vec![
+            ("q[employee.id]".to_string(), employee_id),
+            ("q[start_date][le]".to_string(), datetime),
+            ("sort".to_string(), "-start_date".to_string()),
+            ("limit".to_string(), "1".to_string()),
+        ];
+        let mut hrs = Hours::get_many(self.clone(), None, params);
+        hrs.pop()
+    }
 }
