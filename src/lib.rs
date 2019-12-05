@@ -1,74 +1,63 @@
-pub mod generic;
-pub mod hours;
-pub mod projects;
-pub mod traits;
-use hours::{HourType, Hours};
-use projects::{Project, Service};
-use traits::GetMany;
+pub mod structures;
+use reqwest::{Client as RClient, RequestBuilder, Response};
+use serde::Serialize;
 
-#[derive(Clone)]
-pub struct SimplicateClient {
+pub struct Client {
     pub api_key: String,
     pub api_secret: String,
     pub host: String,
 }
 
-impl SimplicateClient {
-    pub fn get_projects(&self) -> Vec<Project> {
-        Project::get_many(self.clone(), None, vec![])
+impl Client {
+    fn apply_authentication_headers(&self, request: RequestBuilder) -> RequestBuilder {
+        let r = request
+            .header("Authentication-Key", &self.api_key)
+            .header("Authentication-Secret", &self.api_secret);
+        r
     }
 
-    pub fn get_projects_by_status(&self, status_id: String) -> Vec<Project> {
-        let params = vec![("q[project_status.id]".to_string(), status_id)];
-        Project::get_many(self.clone(), None, params)
+    fn format_endpoint(&self, endpoint: &str) -> String {
+        format!("https://{}.simplicate.nl/api/v2/{}", &self.host, endpoint)
     }
+}
 
-    pub fn get_services(&self) -> Vec<Service> {
-        Service::get_many(self.clone(), None, vec![])
-    }
+pub trait QueryMany<O> {
+    const ENDPOINT: &'static str;
 
-    pub fn get_services_by_project(&self, project_id: &str) -> Vec<Service> {
-        let params = vec![("q[project_id]".to_string(), project_id.to_string())];
-        Service::get_many(self.clone(), None, params)
-    }
+    fn unwrap_response(response: Response) -> Vec<O>;
 
-    pub fn get_hourtypes(&self) -> Vec<HourType> {
-        HourType::get_many(self.clone(), None, vec![])
-    }
-
-    pub fn get_employee_hours_for_daterange(
-        &self,
-        employee_id: String,
-        start_date: Option<String>,
-        end_date: Option<String>,
-    ) -> Vec<Hours> {
-        let mut params = vec![("q[employee.id]".to_string(), employee_id)];
-        match start_date {
-            Some(x) => params.push(("q[start_date][ge]".to_string(), x)),
-            None => (),
+    fn get_response(cli: Client, params: Option<Vec<(String, String)>>) -> Option<Response> {
+        let url = cli.format_endpoint(Self::ENDPOINT);
+        let builder = RClient::new().get(&url);
+        let builder = cli.apply_authentication_headers(builder);
+        let response = match params {
+            Some(p) => builder.query(&p).send(),
+            None => builder.send(),
         };
-        match end_date {
-            Some(x) => params.push(("q[start_date][le]".to_string(), x)),
-            None => (),
-        };
-        Hours::get_many(self.clone(), None, params)
+        match response {
+            Ok(x) => Some(x),
+            _ => None,
+        }
     }
 
-    pub fn get_latest_employee_hours_for_date(
-        &self,
-        employee_id: String,
-        date: String,
-    ) -> Option<Hours> {
-        let start_time = format!("{} 00:00:00", &date).to_string();
-        let end_time = format!("{} 23:59:59", &date).to_string();
-        let params = vec![
-            ("q[employee.id]".to_string(), employee_id),
-            ("q[start_date][ge]".to_string(), start_time),
-            ("q[start_date][le]".to_string(), end_time),
-            ("sort".to_string(), "-start_date".to_string()),
-            ("limit".to_string(), "1".to_string()),
-        ];
-        let mut hrs = Hours::get_many(self.clone(), None, params);
-        hrs.pop()
+    fn fetch_many(cli: Client, params: Option<Vec<(String, String)>>) -> Option<Vec<O>> {
+        let response = Self::get_response(cli, params);
+        match response {
+            Some(resp) => Some(Self::unwrap_response(resp)),
+            None => None,
+        }
+    }
+}
+
+pub trait Post<T>: Serialize {
+    const ENDPOINT: &'static str;
+    fn post(&self, cli: Client) -> Option<Response> {
+        let url = cli.format_endpoint(Self::ENDPOINT);
+        let builder = RClient::new().post(&url).json(self);
+        let builder = cli.apply_authentication_headers(builder);
+        match builder.send() {
+            Ok(x) => Some(x),
+            _ => None,
+        }
     }
 }
