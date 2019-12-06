@@ -25,6 +25,7 @@ pub struct Project {
     pub id: String,
     pub name: String,
     pub project_status: Option<ProjectStatus>,
+    pub organization: Option<NamedReference>,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
 }
